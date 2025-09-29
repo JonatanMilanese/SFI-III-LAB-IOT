@@ -47,12 +47,12 @@ public class MqttService
         // Configuración por defecto
         options = new MqttClientOptionsBuilder()
             .WithClientId("maui-client-" + Guid.NewGuid().ToString())
-            .WithTcpServer("192.168.0.103", 5004)
+            .WithTcpServer("***.***.**.***", 5004)
             .WithCleanSession()
             .Build();
     }
 
-    public async Task ConnectAsync(string host = "192.168.0.103", int port = 5004)
+    public async Task ConnectAsync(string host = "***.***.**.***", int port = 5004)
     {
         try
         {
