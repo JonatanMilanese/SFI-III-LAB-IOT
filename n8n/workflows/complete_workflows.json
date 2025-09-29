@@ -1,0 +1,172 @@
+{
+  "name": "Complete LED Control",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "led_control",
+        "options": {}
+      },
+      "name": "Control Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        200
+      ],
+      "id": "e2f0a1c7-c752-4416-b188-4e08b1a8f94a"
+    },
+    {
+      "parameters": {
+        "functionCode": "let data = {};\nlet body = $json.body;\ndata.action = body.command;\ndata.device_id = body.device_id || 'esp32_c3_01';\ndata.source = 'webhook';\ndata.correlation_id = new Date().getTime();\ndata.created_at = new Date().toISOString();\nreturn [{ json: data }];",
+        "options": {}
+      },
+      "name": "Validar y Preparar",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        200
+      ],
+      "id": "a933f7f8-51f7-4186-b4d0-4e4b525d81f2"
+    },
+    {
+      "parameters": {
+        "host": "mosquitto",
+        "topic": "led_control",
+        "qos": "0",
+        "retain": false,
+        "data": "{\"action\": \"{{$json.action}}\", \"source\": \"{{$json.source}}\", \"correlation_id\": \"{{$json.correlation_id}}\"}",
+        "options": {}
+      },
+      "name": "Publicar MQTT",
+      "type": "n8n-nodes-base.mqtt",
+      "typeVersion": 1,
+      "position": [
+        650,
+        200
+      ],
+      "id": "c138b1f5-1c39-4d6b-9524-8f7f9b8c0b2a",
+      "credentials": {
+        "mqttApi": "1"
+      }
+    },
+    {
+      "parameters": {
+        "host": "mosquitto",
+        "topic": "led_events",
+        "options": {}
+      },
+      "name": "Disparador MQTT",
+      "type": "n8n-nodes-base.mqttTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        400
+      ],
+      "id": "8c4a04e5-9f5e-4c7b-8b5e-149b808e0b2a",
+      "credentials": {
+        "mqttApi": "1"
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "let data = {};\nlet body = JSON.parse($json.data);\ndata.action = body.action;\ndata.device_id = body.device_id || 'esp32_c3_01';\ndata.source = 'device';\ndata.correlation_id = body.correlation_id || new Date().getTime();\ndata.created_at = new Date().toISOString();\nreturn [{ json: data }];",
+        "options": {}
+      },
+      "name": "Preparar Datos (MQTT)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        400
+      ],
+      "id": "e3a4e9b1-0c58-45e0-9112-25e2e8e9c2f3"
+    },
+    {
+      "parameters": {
+        "host": "mysql",
+        "database": "lab_db",
+        "statement": "INSERT INTO led_events (device_id, action, source, correlation_id, created_at) VALUES ('{{$json.device_id}}', '{{$json.action}}', '{{$json.source}}', '{{$json.correlation_id}}', '{{$json.created_at}}')",
+        "options": {}
+      },
+      "name": "Insertar en MySQL",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [
+        650,
+        400
+      ],
+      "id": "c7c8c3a9-906d-4d7a-b50a-e8d9e2a7f8b9",
+      "credentials": {
+        "mysql": "1"
+      }
+    },
+    {
+      "parameters": {
+        "host": "mysql",
+        "database": "lab_db",
+        "statement": "INSERT INTO led_events (device_id, action, source, correlation_id, created_at) VALUES ('{{$json.device_id}}', '{{$json.action}}', '{{$json.source}}', '{{$json.correlation_id}}', '{{$json.created_at}}')",
+        "options": {}
+      },
+      "name": "Insertar en MySQL (Webhook)",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 1,
+      "position": [
+        650,
+        200
+      ],
+      "id": "b3e0e7a1-8d2a-4a7b-a1e1-e1e7a5c8c2b9",
+      "credentials": {
+        "mysql": "1"
+      }
+    }
+  ],
+  "connections": {
+    "Control Webhook": [
+      [
+        {
+          "node": "Validar y Preparar",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Validar y Preparar": [
+      [
+        {
+          "node": "Publicar MQTT",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Insertar en MySQL (Webhook)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Publicar MQTT": [],
+    "Disparador MQTT": [
+      [
+        {
+          "node": "Preparar Datos (MQTT)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Preparar Datos (MQTT)": [
+      [
+        {
+          "node": "Insertar en MySQL",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Insertar en MySQL": [],
+    "Insertar en MySQL (Webhook)": []
+  }
+}

@@ -1,0 +1,31 @@
+﻿@page "/datos"
+@inject IJSRuntime JSRuntime
+
+<div class="p-8 bg-white min-h-screen">
+    <h2 class="text-3xl font-extrabold text-indigo-700 mb-8">Historial de Acciones (Firestore)</h2>
+
+    <div class="relative overflow-x-auto shadow-xl rounded-lg">
+        <table id="data-table" class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                <tr>
+                    <th class="px-6 py-3">ID</th>
+                    <th class="px-6 py-3">Device ID</th>
+                    <th class="px-6 py-3">Acción</th>
+                    <th class="px-6 py-3">Fuente</th>
+                    <th class="px-6 py-3">Fecha/Hora</th>
+                </tr>
+            </thead>
+            <tbody id="data-table-body">
+                <tr class="bg-white border-b"><td colspan="5" class="px-6 py-4 text-center">Iniciando conexión a Firestore...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JSRuntime.InvokeVoidAsync("startDatabaseListener");
+    }
+}

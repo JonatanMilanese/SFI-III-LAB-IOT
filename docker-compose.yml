@@ -1,0 +1,96 @@
+name: lab-iot
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [labnet]
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    environment:
+      PMA_HOST: mysql
+    ports:
+      - "8081:80"
+    depends_on: [mysql]
+    networks: [labnet]
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "5004:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks: [labnet]
+
+  n8n:
+    image: n8nio/n8n:latest
+    environment:
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_HOST: n8n
+      GENERIC_TIMEZONE: ${TZ}
+      DB_TYPE: mysql
+      DB_MYSQL_HOST: mysql
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_DATABASE: ${MYSQL_DATABASE}
+      DB_MYSQL_USER: ${MYSQL_USER}
+      DB_MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+    networks: [labnet]
+
+  flask:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: lab-iot-flask-1
+    env_file: .env
+    environment:
+      TZ: ${TZ}
+      MYSQL_HOST: mysql
+    depends_on:
+      - mysql
+    ports:
+      - "5000:5000"
+    networks: [labnet]
+
+  nginx:
+    image: nginx:alpine
+    depends_on: [flask]
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [labnet]
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks: [labnet]
+
+networks:
+  labnet:
+
+volumes:
+  mysql_data:
+  n8n_data:
+  portainer_data:

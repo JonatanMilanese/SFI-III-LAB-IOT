@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        // MQTT configuración puerto 5004 (mismo que MQTT Studio)
+        window.__mqtt = {
+            url: "ws://192.168.0.103:5004",  // Puerto 5004 donde funciona MQTT Studio
+            clientId: "maui-web-" + Math.random().toString(16).slice(2),
+            username: "",
+            password: ""
+        };
+        window.__topics = {
+            cmd: "lab/g1/req/led",      // ✅ Este es el tópico que funciona en MQTT Studio
+            state: "lab/g1/led/state"   // Para recibir el estado del LED
+        };
+        // Firebase config
+        window.__firebase_config = {
+            apiKey: "AIzaSyD4pS1az6lpF2KeI-zX17KNyDTU7rvH8o0",
+            projectId: "jjj-proyecto-software",
+            storageBucket: "jjj-proyecto-software.firebasestorage.app"
+        };
+        window.__app_id = "jjj-proyecto-software";
+    </script>
+    <link href="css/app.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="app">Cargando...</div>
+    <div id="blazor-error-ui" class="hidden"></div>
+    <script src="js/app.js"></script>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+</body>
+</html>
